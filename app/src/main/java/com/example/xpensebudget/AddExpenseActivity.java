@@ -5,14 +5,9 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
-
-import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
-
+import androidx.appcompat.widget.Toolbar;
 import com.example.xpensebudget.databinding.ActivityAddExpenseBinding;
 
 import java.util.Calendar;
@@ -26,118 +21,133 @@ public class AddExpenseActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        binding=ActivityAddExpenseBinding.inflate(getLayoutInflater());
+        binding = ActivityAddExpenseBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        type=getIntent().getStringExtra("type");
-        expenseModel=(ExpenseModel) getIntent().getSerializableExtra("model");
+        // Set the Toolbar as the ActionBar
+        Toolbar toolbar = findViewById(R.id.toolbar);
+        setSupportActionBar(toolbar);  // Using the correct method from AppCompatActivity
 
-        if (type==null){
-            type= expenseModel.getType();
+        // Fetch intent data (type and model)
+        type = getIntent().getStringExtra("type");
+        expenseModel = (ExpenseModel) getIntent().getSerializableExtra("model");
+
+        // If no type is provided, treat this as an update case
+        if (type == null && expenseModel != null) {
+            type = expenseModel.getType();
             binding.amount.setText(String.valueOf(expenseModel.getAmount()));
             binding.category.setText(expenseModel.getCategory());
             binding.description.setText(expenseModel.getDescription());
         }
 
-        if(type.equals("Income")){
+        // Set the selected radio button based on the type (Income or Expense)
+        if ("Income".equals(type)) {
             binding.incomeRadio.setChecked(true);
-        }else {
+        } else {
             binding.expenseRadio.setChecked(true);
         }
 
-        binding.incomeRadio.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                type= "Income";
-            }
-        });
-        binding.expenseRadio.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                type= "Expense";
-            }
-        });
-
-
-
+        // Set click listeners for radio buttons
+        binding.incomeRadio.setOnClickListener(v -> type = "Income");
+        binding.expenseRadio.setOnClickListener(v -> type = "Expense");
     }
 
-        @Override
-        public boolean onCreateOptionsMenu(Menu menu) {
-            MenuInflater menuInflater=getMenuInflater();
-            if (type!=null){
+    // Inflate the appropriate menu based on whether it's an add or update action
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
 
-                menuInflater.inflate(R.menu.add_menu,menu);
+        if (expenseModel == null) {
+            // If model is null, we're adding a new expense
+            menuInflater.inflate(R.menu.add_menu, menu);
+        } else {
+            // If model is not null, we're updating an existing expense
+            menuInflater.inflate(R.menu.update_menu, menu);
+        }
 
-            }else {
-                menuInflater.inflate(R.menu.update_menu,menu);
+        return true;
+    }
+
+    // Handle menu item selections
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        int id = item.getItemId();
+
+        // Handle Save action
+        if (id == R.id.saveExpense) {
+            if (expenseModel == null) {
+                createExpense();  // Adding a new expense
+            } else {
+                updateExpense();  // Updating an existing expense
             }
-
             return true;
         }
 
-        @Override
-        public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id=item.getItemId();
-        if (id==R.id.saveExpense){
-            if (type!=null){
-                createExpense();
-            }else {
-                updateExpense();
-            }
-
+        // Handle Delete action (only available in update_menu)
+        if (id == R.id.deleteExpense) {
+            deleteExpense();  // Delete the expense
             return true;
         }
-        if (id==R.id.deleteExpense){
-            deleteExpense();
-        }
-        return false;
+
+        return super.onOptionsItemSelected(item);
     }
 
+    // Function to delete an expense
     private void deleteExpense() {
+        // TODO: Implement the logic to delete an expense
     }
 
+    // Function to create a new expense
     private void createExpense() {
+        String expenseId = UUID.randomUUID().toString();
+        String amount = binding.amount.getText().toString();
+        String description = binding.description.getText().toString();
+        String category = binding.category.getText().toString();
+        boolean incomeChecked = binding.incomeRadio.isChecked();
 
-        String expenseId= UUID.randomUUID().toString();
-        String amount=binding.amount.getText().toString();
-        String description=binding.description.getText().toString();
-        String category=binding.category.getText().toString();
-        boolean incomeChecked=binding.incomeRadio.isChecked();
-        if (incomeChecked){
-            type="Income";
-        }else{
-            type= "Expense";
+        if (incomeChecked) {
+            type = "Income";
+        } else {
+            type = "Expense";
         }
 
-        if (amount.trim().length()==0){
+        if (amount.trim().length() == 0) {
             binding.amount.setError("Empty");
             return;
         }
-        ExpenseModel expenseModel=new ExpenseModel(expenseId,description,category,type,Long.parseLong(amount), Calendar.getInstance().getTimeInMillis());
 
-        //Firebase Inclusion
+        ExpenseModel expenseModel = new ExpenseModel(
+                expenseId, description, category, type,
+                Long.parseLong(amount), Calendar.getInstance().getTimeInMillis()
+        );
+
+        // TODO: Add Firebase or database logic to store the new expense
     }
+
+    // Function to update an existing expense
     private void updateExpense() {
+        String expenseId = expenseModel.getExpenseId();
+        String amount = binding.amount.getText().toString();
+        String description = binding.description.getText().toString();
+        String category = binding.category.getText().toString();
+        boolean incomeChecked = binding.incomeRadio.isChecked();
 
-        String expenseId= expenseModel.getExpenseId();
-        String amount=binding.amount.getText().toString();
-        String description=binding.description.getText().toString();
-        String category=binding.category.getText().toString();
-        boolean incomeChecked=binding.incomeRadio.isChecked();
-
-        if (incomeChecked){
-            type="Income";
-        }else{
-            type= "Expense";
+        if (incomeChecked) {
+            type = "Income";
+        } else {
+            type = "Expense";
         }
 
-        if (amount.trim().length()==0){
+        if (amount.trim().length() == 0) {
             binding.amount.setError("Empty");
             return;
         }
-        ExpenseModel model=new ExpenseModel(expenseId,description,category,type,Long.parseLong(amount), Calendar.getInstance().getTimeInMillis());
 
-        //Firebase Inclusion
+        ExpenseModel updatedModel = new ExpenseModel(
+                expenseId, description, category, type,
+                Long.parseLong(amount), Calendar.getInstance().getTimeInMillis()
+        );
+
+        // TODO: Add Firebase or database logic to update the existing expense
     }
 }

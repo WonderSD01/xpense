@@ -1,91 +1,109 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="10dp"
     tools:context=".AddExpenseActivity">
 
-    <androidx.cardview.widget.CardView
-        android:layout_margin="10dp"
-        android:padding="10dp"
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
+        />
+
+
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:padding="10dp">
 
         <LinearLayout
-            android:orientation="vertical"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
 
             <!-- Amount Section -->
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
                 <TextView
-                    android:textColor="@color/black"
-                    android:text="Amount"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="Amount"
+                    android:textColor="@color/black" />
+
                 <EditText
                     android:id="@+id/amount"
-                    android:inputType="number"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:inputType="number" />
+
                 <RadioGroup
                     android:id="@+id/typeRadioGroup"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal">
+
                     <RadioButton
                         android:id="@+id/incomeRadio"
-                        android:text="Income"
                         android:layout_width="120dp"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:text="Income" />
+
                     <RadioButton
                         android:id="@+id/expenseRadio"
-                        android:text="Expense"
                         android:layout_width="120dp"
-                        android:layout_height="wrap_content"/>
+                        android:layout_height="wrap_content"
+                        android:text="Expense" />
                 </RadioGroup>
             </LinearLayout>
 
             <!-- New Section (Description) -->
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp">
+                android:layout_marginTop="20dp"
+                android:orientation="vertical">
+
                 <TextView
-                    android:textColor="@color/black"
-                    android:text="Description"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="Description"
+                    android:textColor="@color/black" />
+
                 <EditText
                     android:id="@+id/description"
-                    android:inputType="text"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:inputType="text" />
             </LinearLayout>
             <!-- New Section (Category) -->
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp">
+                android:layout_marginTop="20dp"
+                android:orientation="vertical">
+
                 <TextView
-                    android:textColor="@color/black"
-                    android:text="Category"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:text="Category"
+                    android:textColor="@color/black" />
+
                 <EditText
                     android:id="@+id/category"
-                    android:inputType="text"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"/>
+                    android:layout_height="wrap_content"
+                    android:inputType="text" />
             </LinearLayout>
         </LinearLayout>
     </androidx.cardview.widget.CardView>
