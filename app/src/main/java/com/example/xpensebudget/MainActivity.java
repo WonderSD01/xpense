@@ -1,13 +1,12 @@
 package com.example.xpensebudget;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
-
 import com.example.xpensebudget.databinding.ActivityMainBinding;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -31,6 +30,9 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        // Load the saved budget and display it
+        loadBudget();
+
         // Setup RecyclerView
         expensesAdapter = new ExpensesAdapter(this, this);
         binding.recycler.setAdapter(expensesAdapter);
@@ -40,25 +42,27 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
         intent = new Intent(MainActivity.this, AddExpenseActivity.class);
 
         // Handle add income button click
-        binding.addIncome.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                intent.putExtra("type", "Income");
-                startActivity(intent);
-            }
+        binding.addIncome.setOnClickListener(v -> {
+            intent.putExtra("type", "Income");
+            startActivity(intent);
         });
 
         // Handle add expense button click
-        binding.addExpense.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                intent.putExtra("type", "Expense");
-                startActivity(intent);
-            }
+        binding.addExpense.setOnClickListener(v -> {
+            intent.putExtra("type", "Expense");
+            startActivity(intent);
         });
 
         // Call the method to set up the graph
         setUpGraph();
+    }
+
+    private void loadBudget() {
+        SharedPreferences preferences = getSharedPreferences("BudgetPrefs", MODE_PRIVATE);
+        String dailyBudget = preferences.getString("daily_budget", "0");
+
+        // Display the budget in a TextView in MainActivity
+        binding.budgetDisplay.setText("Daily Budget: " + dailyBudget);
     }
 
     private void setUpGraph() {
@@ -90,6 +94,14 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
     public void onClick(ExpenseModel expenseModel) {
         intent.putExtra("model", expenseModel);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Reload budget and update graph
+        loadBudget();
+        setUpGraph(); // Refresh the pie chart
     }
 
     // Uncomment and implement onStart if needed for Firebase or other data initialization

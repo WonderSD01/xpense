@@ -20,9 +20,17 @@
                 android:layout_width="match_parent"
                 android:id="@+id/pieChart"
                 android:layout_height="match_parent"/>
-
-
         </androidx.cardview.widget.CardView>
+
+        <!-- Budget Display -->
+        <TextView
+            android:id="@+id/budgetDisplay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Today's Budget: "
+            android:textColor="@color/black"
+            android:textSize="18sp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recycler"
@@ -57,7 +65,5 @@
             android:padding="15dp"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"/>
-
     </LinearLayout>
-
 </RelativeLayout>
