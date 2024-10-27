@@ -1,31 +1,52 @@
 package com.example.xpensebudget;
 
+import android.Manifest;
+import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 import com.example.xpensebudget.databinding.ActivityAddExpenseBinding;
+
 import java.util.Calendar;
 import java.util.UUID;
 
 public class AddExpenseActivity extends AppCompatActivity {
-    ActivityAddExpenseBinding binding;
-    public String type;
-    private ExpenseModel expenseModel;
-    private EditText dailyBudgetInput;
-    private Button saveBudgetButton;
-    SharedPreferences sharedPreferences;
 
-    private float totalIncome;
-    private float totalExpense;
+    private ActivityAddExpenseBinding binding;
+    private String type;
+    private ExpenseModel expenseModel;
+    private SharedPreferences sharedPreferences;
+
+    private long totalIncome;
+    private long totalExpense;
+
+    private static final int REQUEST_PERMISSION_READ_EXTERNAL_STORAGE = 100;
+    private Uri imageUri;
+
+    private final ActivityResultLauncher<Intent> imagePickerLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    imageUri = result.getData().getData();
+                    binding.receiptImageView.setImageURI(imageUri);
+                }
+            }
+    );
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,185 +54,187 @@ public class AddExpenseActivity extends AppCompatActivity {
         binding = ActivityAddExpenseBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Set the Toolbar as the ActionBar
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+        setSupportActionBar((Toolbar) findViewById(R.id.toolbar));
+        initializeViews();
+        initializeSharedPreferences();
+        handleIntentData();
+        setRadioButtonListeners();
+        binding.saveBudgetButton.setOnClickListener(v -> saveDailyBudget());
+        binding.selectImageButton.setOnClickListener(v -> handleImageUpload());
+        checkPermission();
+    }
 
-        // Initialize views
-        dailyBudgetInput = findViewById(R.id.dailyBudget);
-        saveBudgetButton = findViewById(R.id.saveBudgetButton);
+    private void initializeViews() {
+        binding.dailyBudget.setText("");
+    }
 
-        // Initialize SharedPreferences
+    private void initializeSharedPreferences() {
         sharedPreferences = getSharedPreferences("BudgetPrefs", MODE_PRIVATE);
+    }
 
-        // Fetch intent data (type and model)
+    private void handleIntentData() {
         type = getIntent().getStringExtra("type");
         expenseModel = (ExpenseModel) getIntent().getSerializableExtra("model");
 
-        // If no type is provided, treat this as an update case
-        if (type == null && expenseModel != null) {
+        if (expenseModel != null) {
             type = expenseModel.getType();
             binding.amount.setText(String.valueOf(expenseModel.getAmount()));
             binding.category.setText(expenseModel.getCategory());
             binding.description.setText(expenseModel.getDescription());
         }
 
-        // Set the selected radio button based on the type (Income or Expense)
-        if ("Income".equals(type)) {
-            binding.incomeRadio.setChecked(true);
-        } else {
-            binding.expenseRadio.setChecked(true);
-        }
-
-        // Set click listeners for radio buttons
-        binding.incomeRadio.setOnClickListener(v -> type = "Income");
-        binding.expenseRadio.setOnClickListener(v -> type = "Expense");
-
-        // Save the daily budget when save button is clicked
-        saveBudgetButton.setOnClickListener(v -> {
-            String budget = dailyBudgetInput.getText().toString();
-            if (!budget.isEmpty()) {
-                // Save budget to SharedPreferences
-                SharedPreferences.Editor editor = sharedPreferences.edit();
-                editor.putString("daily_budget", budget);
-                editor.apply();
-                dailyBudgetInput.setText("");  // Clear the input field
-                Toast.makeText(AddExpenseActivity.this, "Budget saved!", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(AddExpenseActivity.this, "Please enter a valid budget", Toast.LENGTH_SHORT).show();
-            }
-        });
+        updateRadioButtons();
     }
 
-    // Inflate the appropriate menu based on whether it's an add or update action
+    private void updateRadioButtons() {
+        boolean isIncome = "Income".equals(type);
+        binding.incomeRadio.setChecked(isIncome);
+        binding.expenseRadio.setChecked(!isIncome);
+    }
+
+    private void setRadioButtonListeners() {
+        binding.incomeRadio.setOnClickListener(v -> type = "Income");
+        binding.expenseRadio.setOnClickListener(v -> type = "Expense");
+    }
+
+    private void saveDailyBudget() {
+        String budget = binding.dailyBudget.getText().toString();
+        if (!budget.isEmpty()) {
+            sharedPreferences.edit().putString("daily_budget", budget).apply();
+            binding.dailyBudget.setText("");
+            showToast("Budget saved!");
+        } else {
+            showToast("Please enter a valid budget");
+        }
+    }
+
+    private void handleImageUpload() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
+            openImagePicker();
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION_READ_EXTERNAL_STORAGE);
+        }
+    }
+
+    private void openImagePicker() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        imagePickerLauncher.launch(intent);
+    }
+
+    private void checkPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_EXTERNAL_STORAGE}, REQUEST_PERMISSION_READ_EXTERNAL_STORAGE);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQUEST_PERMISSION_READ_EXTERNAL_STORAGE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                openImagePicker();
+            } else {
+                showToast("Permission denied to read storage");
+            }
+        }
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
-        if (expenseModel == null) {
-            menuInflater.inflate(R.menu.add_menu, menu);  // Adding a new expense
+        menuInflater.inflate(expenseModel == null ? R.menu.add_menu : R.menu.update_menu, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+        if (item.getItemId() == R.id.saveExpense) {
+            if (expenseModel == null) {
+                createExpense(); // Create new expense
+            } else {
+                updateExpense(); // Update existing expense
+            }
+            return true;
+        } else if (item.getItemId() == R.id.deleteExpense) {
+            deleteExpense(); // Delete the expense
+            return true;
         } else {
-            menuInflater.inflate(R.menu.update_menu, menu);  // Updating an existing expense
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    private void createExpense() {
+        if (validateAmount()) {
+            long amount = Long.parseLong(binding.amount.getText().toString());
+            String expenseId = UUID.randomUUID().toString();
+            updateTotalAmount(amount);
+            // TODO: Add logic to save the new expense to Firebase or database
+            showToast("Expense added!");
+        }
+    }
+
+    private void updateExpense() {
+        if (validateAmount()) {
+            long amount = Long.parseLong(binding.amount.getText().toString());
+            updateTotalAmount(amount);
+            if (expenseModel != null) {
+                ExpenseModel updatedModel = new ExpenseModel(
+                        expenseModel.getExpenseId(),
+                        binding.description.getText().toString(),
+                        binding.category.getText().toString(),
+                        type,
+                        amount,
+                        Calendar.getInstance().getTimeInMillis()
+                );
+                // TODO: Add logic to update the expense in Firebase or database
+                showToast("Expense updated!");
+            } else {
+                showToast("No expense to update.");
+            }
+        }
+    }
+
+    private boolean validateAmount() {
+        String amountStr = binding.amount.getText().toString();
+        if (amountStr.trim().isEmpty()) {
+            binding.amount.setError("Empty");
+            return false;
         }
         return true;
     }
 
-    // Handle menu item selections
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-
-        // Handle Save action
-        if (id == R.id.saveExpense) {
-            if (expenseModel == null) {
-                createExpense();  // Adding a new expense
-            } else {
-                updateExpense();  // Updating an existing expense
-            }
-            return true;
-        }
-
-        // Handle Delete action (only available in update_menu)
-        if (id == R.id.deleteExpense) {
-            deleteExpense();  // Delete the expense
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    // Function to delete an expense
     private void deleteExpense() {
         // TODO: Implement the logic to delete an expense
-        Toast.makeText(this, "Expense deleted!", Toast.LENGTH_SHORT).show();  // Placeholder
+        showToast("Expense deleted!");
     }
 
-    // Function to create a new expense
-    private void createExpense() {
-        String expenseId = UUID.randomUUID().toString();
-        String amount = binding.amount.getText().toString();
-        String description = binding.description.getText().toString();
-        String category = binding.category.getText().toString();
-        boolean incomeChecked = binding.incomeRadio.isChecked();
-
-        type = incomeChecked ? "Income" : "Expense";
-
-        if (amount.trim().length() == 0) {
-            binding.amount.setError("Empty");
-            return;
-        }
-
-        ExpenseModel newExpenseModel = new ExpenseModel(
-                expenseId, description, category, type,
-                Long.parseLong(amount), Calendar.getInstance().getTimeInMillis()
-        );
-
-        // Update income or expense totals
-        if (type.equals("Expense")) {
-            totalExpense = getCurrentTotalExpenses() + Long.parseLong(amount);
+    private void updateTotalAmount(long amount) {
+        if ("Expense".equals(type)) {
+            totalExpense = getCurrentTotalExpenses() + amount;
             saveTotalExpense(totalExpense);
         } else {
-            totalIncome = getCurrentTotalIncome() + Long.parseLong(amount);
+            totalIncome = getCurrentTotalIncome() + amount;
             saveTotalIncome(totalIncome);
         }
-
-        // TODO: Add Firebase or database logic to store the new expense
-        Toast.makeText(this, "Expense added!", Toast.LENGTH_SHORT).show();  // Placeholder
     }
 
-    // Function to update an existing expense
-    private void updateExpense() {
-        String expenseId = expenseModel.getExpenseId();
-        String amount = binding.amount.getText().toString();
-        String description = binding.description.getText().toString();
-        String category = binding.category.getText().toString();
-        boolean incomeChecked = binding.incomeRadio.isChecked();
-
-        type = incomeChecked ? "Income" : "Expense";
-
-        if (amount.trim().length() == 0) {
-            binding.amount.setError("Empty");
-            return;
-        }
-
-        // Calculate the new totals based on type
-        if (type.equals("Expense")) {
-            totalExpense = getCurrentTotalExpenses() + Long.parseLong(amount);
-            saveTotalExpense(totalExpense);
-        } else {
-            totalIncome = getCurrentTotalIncome() + Long.parseLong(amount);
-            saveTotalIncome(totalIncome);
-        }
-
-        ExpenseModel updatedModel = new ExpenseModel(
-                expenseId, description, category, type,
-                Long.parseLong(amount), Calendar.getInstance().getTimeInMillis()
-        );
-
-        // TODO: Add Firebase or database logic to update the existing expense
-        Toast.makeText(this, "Expense updated!", Toast.LENGTH_SHORT).show();  // Placeholder
+    private long getCurrentTotalExpenses() {
+        return sharedPreferences.getLong("total_expense", 0);
     }
 
-    // Method to get current total expenses from SharedPreferences
-    private float getCurrentTotalExpenses() {
-        return sharedPreferences.getFloat("total_expense", 0);
+    private long getCurrentTotalIncome() {
+        return sharedPreferences.getLong("total_income", 0);
     }
 
-    // Method to get current total income from SharedPreferences
-    private float getCurrentTotalIncome() {
-        return sharedPreferences.getFloat("total_income", 0);
+    private void saveTotalExpense(long totalExpense) {
+        sharedPreferences.edit().putLong("total_expense", totalExpense).apply();
     }
 
-    // Method to save total expense to SharedPreferences
-    private void saveTotalExpense(float totalExpense) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putFloat("total_expense", totalExpense);
-        editor.apply();
+    private void saveTotalIncome(long totalIncome) {
+        sharedPreferences.edit().putLong("total_income", totalIncome).apply();
     }
 
-    // Method to save total income to SharedPreferences
-    private void saveTotalIncome(float totalIncome) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putFloat("total_income", totalIncome);
-        editor.apply();
+    private void showToast(String message) {
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
     }
 }

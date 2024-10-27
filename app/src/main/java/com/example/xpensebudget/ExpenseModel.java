@@ -9,27 +9,23 @@ public class ExpenseModel implements Serializable {
     private String type;
     private long amount;
     private long time;
+    private String imageUri; // New field for image URI
 
-    public ExpenseModel() {
-    }
+    // Default constructor
+    public ExpenseModel(String expenseId, String string, String s, String type, long amount, long timeInMillis) {}
 
-    public ExpenseModel(String description, String expenseId, String category, String type, long amount, long time) {
-        this.description = description;
+    // Parameterized constructor
+    public ExpenseModel(String expenseId, String description, String category, String type, long amount, long time, String imageUri) {
         this.expenseId = expenseId;
+        this.description = description;
         this.category = category;
         this.type = type;
         this.amount = amount;
         this.time = time;
+        this.imageUri = imageUri; // Initialize the image URI
     }
 
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
+    // Getters and setters
     public String getExpenseId() {
         return expenseId;
     }
@@ -54,6 +50,14 @@ public class ExpenseModel implements Serializable {
         this.category = category;
     }
 
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
     public long getAmount() {
         return amount;
     }
@@ -68,5 +72,15 @@ public class ExpenseModel implements Serializable {
 
     public void setTime(long time) {
         this.time = time;
+    }
+
+    // Getter for imageUri
+    public String getImageUri() {
+        return imageUri;
+    }
+
+    // Setter for imageUri
+    public void setImageUri(String imageUri) {
+        this.imageUri = imageUri;
     }
 }
