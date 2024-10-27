@@ -4,9 +4,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
+
 import com.example.xpensebudget.databinding.ActivityMainBinding;
 import com.github.mikephil.charting.data.PieData;
 import com.github.mikephil.charting.data.PieDataSet;
@@ -15,7 +17,7 @@ import com.github.mikephil.charting.data.PieEntry;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements OnItemsCLick {
+public class MainActivity extends AppCompatActivity implements ExpensesAdapter.OnItemClickListener { // Implement the correct interface
     ActivityMainBinding binding;
     private ExpensesAdapter expensesAdapter;
     private Intent intent;
@@ -23,6 +25,9 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
     // Declare income and expense variables
     private float income = 0; // Initialize as needed
     private float expense = 0; // Initialize as needed
+
+    // Declare a list to hold expenses
+    private List<ExpenseModel> expenseModelList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +38,14 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
         // Load the saved budget and display it
         loadBudget();
 
+        // Initialize the list for expenses
+        expenseModelList = new ArrayList<>(); // Initialize your expense list here
+
+        // Fetch existing expenses to populate the list (replace with your actual data fetching logic)
+        fetchExpenses();
+
         // Setup RecyclerView
-        expensesAdapter = new ExpensesAdapter(this, this);
+        expensesAdapter = new ExpensesAdapter(expenseModelList, this, this); // Pass 'this' for the listener
         binding.recycler.setAdapter(expensesAdapter);
         binding.recycler.setLayoutManager(new LinearLayoutManager(this));
 
@@ -90,6 +101,13 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
         binding.pieChart.invalidate(); // Refresh the chart
     }
 
+    private void fetchExpenses() {
+        // TODO: Replace this with your actual logic to fetch expenses
+        // Example: Populate expenseModelList with data from your database
+        // For now, let's add a sample expense
+        expenseModelList.add(new ExpenseModel("1", "Sample Expense", "Food", "Expense", 100, System.currentTimeMillis()));
+    }
+
     @Override
     public void onClick(ExpenseModel expenseModel) {
         intent.putExtra("model", expenseModel);
@@ -103,12 +121,4 @@ public class MainActivity extends AppCompatActivity implements OnItemsCLick {
         loadBudget();
         setUpGraph(); // Refresh the pie chart
     }
-
-    // Uncomment and implement onStart if needed for Firebase or other data initialization
-    // @Override
-    // protected void onStart() {
-    //     super.onStart();
-    //     // Logic to fetch data and update income and expense values
-    //     // Call setUpGraph() after updating income and expense values
-    // }
 }
